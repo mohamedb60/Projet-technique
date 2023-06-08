@@ -43,4 +43,10 @@ def export_dataset_excel(requete, id):
     return reponse
 
 # Endpoint: GET /datasets/<id>/stats/
+def get_dataset_stats(requete, id):
+    dataset = get_object_or_404( Dataset, id=id)
+    df = pd.read_csv(dataset.filepath)
+    stat = df.describe().to_dict()
+    return HttpResponse(stat)
+
 
