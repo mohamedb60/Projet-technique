@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.shortcuts import get_objet_or_404
 import pandas as pd
-
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 # Endpoint: GET /datasets/
 def liste_datasets(requete):
@@ -50,3 +51,19 @@ def get_dataset_stats(requete, id):
     return HttpResponse(stat)
 
 
+
+def generate_dataset_plot(requete, id):
+    dataset = Dataset.objects.filter(id=id).first()
+    if not dataset:
+        return HttpResponse({'error': 'Dataset not found'}, status=404)
+ df = pd.read_csv(dataset.filepath)
+    fig, axs = plt.subplots(len(df.columns), 1, figsize=(8, 6*len(df.columns)))
+    for i, column in enumerate(df.columns):
+        axs[i].hist(df[column])
+        axs[i].set_title(column)
+    pdf_filename = "dataset_plot.pdf"
+    with PdfPages(pdf_filename) as pdf:
+        pdf.savefig(fig)
+    with open(pdf_filename, 'rb') as file:
+        reponse = HttpResponse(file.read())
+        return reponse
