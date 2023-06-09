@@ -1,23 +1,24 @@
+from .models import Dataset
 from django.shortcuts import render
 from django.http import HttpResponse
-from django.shortcuts import get_objet_or_404
+from django.shortcuts import get_object_or_404
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 # Endpoint: GET /datasets/
-def list_datasets(requete):
-    datasets = Datasets.objects.all()
+def list_datasets(request):
+    datasets = Dataset.objects.all()
     datasets_list = []
     for k in datasets:
-        datasets_list({'id' : k.id, 'filename' : k.filename, 'size' : k.size})
+        datasets_list.append({'id': k.id, 'filename': k.filename, 'size': k.size})
     return HttpResponse(datasets_list)
 
 # Endpoint: POST /datasets/
 def create_dataset(request):
     if request.method == 'POST' and request.FILES.get('file'):
-        file = request.FILES['fichier']
-        dataset = dataset.object.create(filename = file.name, size = file.size)
+        file = request.FILES['file']
+        dataset = object.create(filename = file.name, size = file.size)
         df = pd.read_csv(file)
         return HttpResponse({'id': dataset.id, 'url': f'/datasets/{dataset.id}/'})
     else:
@@ -25,34 +26,34 @@ def create_dataset(request):
 
 # Endpoint: GET /datasets/<id>/
 def get_dataset(request, id):
-    dataset = get_objet_or_404(Dataset, id = id)
-    return HttpReponse({'file' : dataset.filename, 'size': dataset.size})
+    dataset = get_object_or_404(Dataset, id = id)
+    return HttpResponse({'file' : dataset.filename, 'size': dataset.size})
 
 # Endpoint: DELETE /datasets/<id>/
 def delete_dataset(request, id):
-    dataset = Dataset.objects.get_or_404(Dataset, id = id)
+    dataset = Dataset.object.get_or_404(Dataset, id = id)
     dataset.delete()
     return HttpResponse({'message': 'Dataset supprimé'})
 
 # Endpoint: GET /datasets/<id>/excel
 def export_dataset_excel(request, id):
-    dataset = get_objet_or_404(Dataset, id=id)
+    dataset = get_object_or_404(Dataset, id=id)
     df = pd.read_csv(dataset.filepath)
     excel_file = df.to_excel(index=False)
     response = HttpResponse()
-    excel_file.save(response)
+    df.to_excel(response, index=False)
     return response
 
 # Endpoint: GET /datasets/<id>/stats/
 def get_dataset_stats(request, id):
-    dataset = get_objet_or_404( Dataset, id=id)
+    dataset = get_object_or_404( Dataset, id=id)
     df = pd.read_csv(dataset.filepath)
     stat = df.describe().to_dict()
     return HttpResponse(stat)
 
 
 
-def generate_dataset_plot(requete, id):
+def generate_dataset_plot(request, id):
     dataset = Dataset.objects.filter(id=id).first()
     if not dataset:
         return HttpResponse({'error': 'Dataset not found'}, status=404)
